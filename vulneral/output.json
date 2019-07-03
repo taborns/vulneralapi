@@ -1,0 +1,34 @@
+[
+  [
+    "Include",
+    {
+      "expr": "test.php",
+      "lineno": 2,
+      "once": false
+    }
+  ],
+  [
+    "Include",
+    {
+      "expr": "test.php",
+      "lineno": 3,
+      "once": true
+    }
+  ],
+  [
+    "Require",
+    {
+      "expr": "test.php",
+      "lineno": 4,
+      "once": false
+    }
+  ],
+  [
+    "Require",
+    {
+      "expr": "test.php",
+      "lineno": 5,
+      "once": true
+    }
+  ]
+]
