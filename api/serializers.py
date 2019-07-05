@@ -10,14 +10,34 @@ class SingleFileIssueSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=200)
     line = serializers.IntegerField()
 
+class IssueTypeCountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.IssueTypeCount
+        exclude = ('summary','id')
+        
+class SummarySerializer(serializers.ModelSerializer):
+    issue_counts = IssueTypeCountSerializer(read_only=True, many=True)
+    class Meta:
+        model = models.Summary
+        fields = '__all__'
+
+class DashboardSerializer(serializers.Serializer):
+    summary = SummarySerializer()
+
 
 class RecursiveField(serializers.Serializer):
     def to_representation(self, value):
         serializer = self.parent.parent.__class__(value, context=self.context)
         return serializer.data
 
+class ScanResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ScanResult
+        fields = '__all__'
+
 class ApplicationSerializer(serializers.ModelSerializer):
     project = serializers.FileField(write_only=True, required=True)
+    scans = ScanResultSerializer(read_only=True, many=True)
     class Meta:
         model = models.Application
         fields = '__all__'
@@ -54,8 +74,3 @@ class IssueSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ScanResultSerializer(serializers.ModelSerializer):
-    project = ApplicationSerializer(read_only=True)
-    class Meta:
-        model = models.ScanResult
-        fields = '__all__'

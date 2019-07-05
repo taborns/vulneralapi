@@ -6,6 +6,7 @@ class IssueHandler:
         self.scanResult = scanResult
         self.vulnTree = vulnTree
         self.__handle()
+        self.save()
 
     def __handle(self):
         for vuln in self.vulnTree.vulns:

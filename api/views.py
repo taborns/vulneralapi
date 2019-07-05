@@ -35,7 +35,17 @@ class SingleFileView(APIView):
         return Response(vulns_serialized.data, status=status.HTTP_200_OK)
         
 
-            
+class ScanSummaryView(generics.ListAPIView):
+    queryset = models.Summary
+    serializer_class = serializers.SummarySerializer
+
+    def list(self, request, app_pk, scanPk, *args, **kwargs):
+        application = models.Application.objects.get(pk=app_pk)
+        scan = application.scans.get(pk=scanPk)
+        summary = scan.summary.first()
+        serializer = self.get_serializer(summary)
+
+        return Response(serializer.data,status=status.HTTP_200_OK)
 
 class ApplicationView(generics.ListCreateAPIView):
     queryset = models.Application.objects.all()

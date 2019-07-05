@@ -47,7 +47,7 @@ class ScanResult(models.Model):
         super(ScanResult, self).save(*args, **kwargs)
 
     class Meta:
-        ordering = ('scanned_at', 'scan_version')
+        ordering = ('-scanned_at', 'scan_version')
 
     def __str__(self):
         return "%s - %s" % (self.project, self.scan_version)
@@ -72,3 +72,20 @@ class File(models.Model):
     
     def __str__(self):
         return self.name
+
+class IssueTypeCount(models.Model):
+    issueName = models.CharField(max_length=20)
+    count = models.IntegerField(default=0)
+    summary = models.ForeignKey('summary', related_name='issue_counts')
+    
+class Summary(models.Model):
+    scanTime = models.CharField(max_length=20)
+    totalLines = models.IntegerField(default=0)
+    totalFiles = models.IntegerField(default=0)
+    totalFolders = models.IntegerField(default=0)
+    totalClasses = models.IntegerField(default=0)
+    totalVulns = models.IntegerField(default=0)
+    project = models.ForeignKey('Application', related_name='summaries')
+    scanResult = models.ForeignKey('ScanResult', related_name='summary')
+
+    

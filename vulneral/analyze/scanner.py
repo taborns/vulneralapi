@@ -11,7 +11,6 @@ class Scanner:
             self.importScanParamsFromParent()
         else:
             self.setScanParams(file_name)
-
         self.in_function = False
         self.context_object = self
         self.in_class = False 

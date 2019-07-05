@@ -723,7 +723,7 @@ class ArrayOffset():
             self.vulnTreeNode = self.nameObject.vulnTreeNode
 
         elif self.name in self.scanner.sources and not self.vulnTreeNode:
-            self.vulnTreeNode = VulnTreeNode( "Sensitive sink used", self.lnr, Printer.warning(self.__str__()))
+            self.vulnTreeNode = VulnTreeNode( "Potentially vulnerable source is used", self.lnr, Printer.warning(self.__str__()))
          
     def isuserinput(self):
         if self.vulnTreeNode:
@@ -1168,7 +1168,7 @@ class VarDeclared():
     def getVulnTreeNode(self):
         
         if hasattr(self.value, 'vulnTreeNode') and self.value.vulnTreeNode :
-            self.vulnTreeNode = VulnTreeNode('', self.lnr, self.__str__(),is_rootable=False)
+            self.vulnTreeNode = VulnTreeNode('The assigned value is not secure.', self.lnr, self.__str__(),is_rootable=False)
             self.vulnTreeNode.addChildren(self.value.vulnTreeNode)
 
             if self.value.vulnTreeNode.sink_vuln:
@@ -1504,3 +1504,4 @@ class PClass:
 
     def __str__(self):
         return "class %s" % self.name 
+

@@ -4,10 +4,12 @@ from vulneral.phpparse import make_parser
 from vulneral.analyze.scanner import Scanner
 from vulneral.analyze.issuehandler import IssueHandler
 from api import models
-import simplejson
+import simplejson, os
 
 class PHPFile:
-    def __init__(self, file_name, text_data=None, application=None, scanResult=None, persist=True):
+    def __init__(self, file_name, text_data=None, application=None, scanResult=None, issue_counts={}, summary_object=None, persist=True):
+        self.summary_object = summary_object
+        self.issue_counts = issue_counts
         self.file_name = file_name
         self.text_data = text_data
         self.persist = persist
@@ -16,6 +18,8 @@ class PHPFile:
         self.parser = make_parser()
         self.with_lineno = True
         self.vulnFile = None
+        self.scanner = None
+
         self.vulnTree = self.getScanner()
         self.syntax_error = False 
 
@@ -37,11 +41,11 @@ class PHPFile:
         with open(self.file_name, "r") as f:
             input_file = f.read()
 
+
         return input_file    
         
 
     def createFile(self):
-        return
         if not self.vulnTree.length():
             return
         path = '/'.join(self.file_name.split('/')[1:])
@@ -74,8 +78,10 @@ class PHPFile:
             # simplejson.dump(tokens,output, indent=2)
             # output.write('\n')
                 
-            scanner = Scanner(tokens, file_name=self.file_name)
-            return scanner.scan()
+            self.scanner = Scanner(tokens, file_name=self.file_name)
+            vulnTree = self.scanner.scan()
+           
+            return vulnTree
         
         except (RuntimeError) as e:
             scanner = Scanner([], file_name=self.file_name)
@@ -84,11 +90,30 @@ class PHPFile:
             self.syntax_error = True
             scanner = Scanner([], file_name=self.file_name)
         
-        return scanner.scan()
+        vulnTree = scanner.scan()
+
+        return vulnTree
     
     
     def handle(self):
         if self.persist:
+            print "IT is persisiting"
             IssueHandler(self.vulnTree, self.vulnFile, self.scanResult)
+
+            if self.summary_object:
+                
+                if self.scanner:
+                    self.summary_object.totalClasses += len(self.scanner.classes)
+
+                self.summary_object.totalVulns += len(self.vulnTree.vulns)
+                self.summary_object.totalLines += len(open(self.file_name).readlines())
+               
+                for vuln in self.vulnTree.vulns:
+                    if vuln.issue_name:
+                        issueType = self.issue_counts.get( vuln.issue_name,  models.IssueTypeCount(issueName=vuln.issue_name, count=0) )
+                        issueType.count += 1
+                        self.issue_counts[vuln.issue_name] = issueType
+
+
         
         return self.vulnTree

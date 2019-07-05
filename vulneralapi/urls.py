@@ -29,5 +29,7 @@ urlpatterns = [
     url(r'^applications/(?P<pk>\d+)/((scans/)?)$', api_views.ProjectScanResultView.as_view(), name='file-list'),
     url(r'^applications/(?P<app_pk>\d+)/scans/(?P<pk>\d+)/((files/)?)$', api_views.ScanResultFiles.as_view(), name='file-list'),
     url(r'^applications/(?P<app_pk>\d+)/scans/(?P<scanPk>\d+)/files/(?P<filePk>\d+)/$', api_views.ScanResultFileIssueView.as_view(), name='file-list'),
+    url(r'^applications/(?P<app_pk>\d+)/scans/(?P<scanPk>\d+)/summary/$', api_views.ScanSummaryView.as_view(), name='Summary'),
+
     url(r'^scan/$', api_views.SingleFileView.as_view()),
 ]
