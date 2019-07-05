@@ -7,7 +7,7 @@ from django.db import models
 class Application(models.Model):
     version = models.CharField(max_length=10)
     name = models.CharField(max_length=200)
-    project = models.FileField(upload_to='projects/')
+    #project = models.FileField(upload_to='projects/')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

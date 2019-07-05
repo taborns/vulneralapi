@@ -2,13 +2,40 @@
 from __future__ import unicode_literals
 
 from django.shortcuts import render
+from vulneral.analyze.PHPFile import PHPFile
 from api import models, serializers
 from rest_framework import generics,status
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from rest_framework.response import Response
 from vulneral.analyze.ProjectHandler import ProjectHandler
+from rest_framework.views import APIView
+
 
 # Create your views here.
+class SingleFileView(APIView):
+
+
+    def post(self, request, *args, **kwargs):
+        serializer = serializers.SingleFileSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        file_name = serializer.validated_data.get('file_name')
+        code = serializer.validated_data.get('code')
+        phpFile = PHPFile(file_name, text_data=code)
+        vulnTree = phpFile.handle()
+        vulns = []
+        
+        for vuln in vulnTree.vulns:
+            vulns.append( {'title' : vuln.title, 'line'  :  vuln.line} )
+        
+        vulns_serialized = serializers.SingleFileIssueSerializer( vulns, many=True)
+        
+        if phpFile.syntax_error:
+            return Response({'error' : 'There is a syntax error in your code'},  status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(vulns_serialized.data, status=status.HTTP_200_OK)
+        
+
+            
 
 class ApplicationView(generics.ListCreateAPIView):
     queryset = models.Application.objects.all()
@@ -17,10 +44,28 @@ class ApplicationView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        application = self.perform_create(serializer)
+        
+        try:
+            application = models.Application.objects.get(name__iexact=serializer.validated_data.get('name'), version__iexact=serializer.validated_data.get('version'))
+            serializer = self.get_serializer(instance=application,  data=serializer.validated_data, partial=True)
+            serializer.is_valid(raise_exception=True)
+
+            self.perform_update(serializer)
+        except Exception as e:
+            print e.message
+            print "--" * 20
+            application = self.perform_create(serializer)
+        
+        lastScanResult = application.scans.first()
+        last_scan_version = 1    
+        if lastScanResult:
+            last_scan_version = lastScanResult.scan_version+1
+
+
+        scanResult = models.ScanResult.objects.create(scan_version=last_scan_version, project=application)
         headers = self.get_success_headers(serializer.data)
         
-        ProjectHandler.handle(application.project.url)
+        ProjectHandler.handle(request.data.get('project').temporary_file_path(), application, scanResult)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
@@ -90,3 +135,4 @@ class ScanResultFileIssueView(generics.ListAPIView):
 
         serializer = self.get_serializer(scanResult.issues.filter(vulnFile=vulnFile,parent__isnull=True, scanResult=scanResult), many=True)
         return Response(serializer.data)
+

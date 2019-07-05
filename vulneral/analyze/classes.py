@@ -1,5 +1,5 @@
 from vulneral.analyze.sink_points import *
-
+from vulneral.analyze.printer import Printer
 class TokenName:
     T_ASSIGNMENT = 'Assignment'
     T_VARIABLE = 'Variable'
@@ -211,7 +211,7 @@ class Sink:
                 elif value.userinput:
                     if not self.vulnTreeNode:
                         self.vulnTreeNode = VulnTreeNode('A sink function is called with unsanitized parameter. This causes potential %s' % ( vulnName.upper()), self.lnr, self.__str__())
-                    
+                        self.vulnTreeNode.issue_name = vulnName
                     self.vulnTreeNode.addChildren( value.vulnTreeNode)
                     self.vulnTreeNode.addPatch( sinkInfo[1] )
 
@@ -242,6 +242,7 @@ class VulnTreeNode:
 
         #Sink is with unsanitized input is called. Thus, vulnerability  
         self.sink_vuln = False
+        self.issue_name = None
 
 
     def __getHash(self):
@@ -273,24 +274,33 @@ class VulnTreeNode:
     def vulnerable(self):
         return self.length() > 0
     
+    def save(self, handlerObj, parent=None):
+        issue = handlerObj.saveIssue(self, parent)
+        for child in self.children:
+            child.save(handlerObj, issue)
+    
     def display(self, width=2):
-
+            
         for child in self.children:
             print '%*s [*] %2s' % (width, ' ', str(child))
+           
             child.display(width+2)
-    
+
     def getFileName(self):
         if self.file_name:
             return '/'.join(self.file_name.split('/')[1:])
         
         return ''
+
     def __str__(self):
-        if self.snippet and self.file_name:
-            return "(%s) %s at line %s : '%s'" % (self.getFileName(), self.title, self.line, str(self.snippet))
+        if self.snippet and self.file_name :
+            return "(%s , line %s)  %s  %s" % (self.getFileName(), self.line, self.title,  Printer.bold(Printer.fail(str(self.snippet) )) )
+
         elif self.snippet:
-            return "%s at line %s : '%s'" % (self.title, self.line, str(self.snippet))
-        elif self.file_name:
-            return "(%s) at line %s : '%s'" % (str(self.getFileName()),  self.line, self.title)
+            return "%s at line %s %s" % (self.title, self.line, Printer.bold( Printer.green(str(self.snippet) )) )
+        
+        elif self.file_name :
+            return "(%s, line %s)   %s" % (str(self.getFileName()),  self.line, self.title)
 
         return "%s at line %s " % (self.title, self.line)
     
@@ -713,7 +723,7 @@ class ArrayOffset():
             self.vulnTreeNode = self.nameObject.vulnTreeNode
 
         elif self.name in self.scanner.sources and not self.vulnTreeNode:
-            self.vulnTreeNode = VulnTreeNode( "Sensitive sink used", self.lnr, self.__str__())
+            self.vulnTreeNode = VulnTreeNode( "Sensitive sink used", self.lnr, Printer.warning(self.__str__()))
          
     def isuserinput(self):
         if self.vulnTreeNode:
@@ -940,15 +950,19 @@ class FunctionCall:
                             self.vulnTreeNode = VulnTreeNode('A sink function is called with unsanitized parameter. This causes potential %s' % ( vulnName.upper()), self.lnr, self.__str__())                
                             self.vulnTreeNode.addPatch(sinkInfo[1] )
                             self.vulnTreeNode.sink_vuln = True
+                            self.vulnTreeNode.issue_name = vulnName
 
                         if param.vulnTreeNode:
                             self.vulnTreeNode.addChildren( param.vulnTreeNode)
                             self.vulnTreeNode.sink_vuln = True
+                            self.vulnTreeNode.issue_name = vulnName
+
                         
                         not_secure = True
 
             return not_secure 
         elif self.name in self.scanner.sources:
+            self.vulnTreeNode = VulnTreeNode( "Sensitive sink used", self.lnr, Printer.warning(self.__str__()))
             return True
 
         elif self.scanner.securingFor( self.name ):

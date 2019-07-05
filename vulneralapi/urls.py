@@ -26,8 +26,8 @@ urlpatterns = [
     url(r'^files/$', api_views.FileView.as_view(), name='file-list'),
     url(r'^files/(?P<pk>\d+)/issues/$', api_views.FileIssuesView.as_view(), name='file-list'),
     url(r'^applications/(?P<pk>\d+)/files/$', api_views.ProjectFilesView.as_view(), name='file-list'),
-    url(r'^applications/(?P<pk>\d+)/scans/$', api_views.ProjectScanResultView.as_view(), name='file-list'),
-    url(r'^applications/(?P<app_pk>\d+)/scans/(?P<pk>\d+)/files/$', api_views.ScanResultFiles.as_view(), name='file-list'),
+    url(r'^applications/(?P<pk>\d+)/((scans/)?)$', api_views.ProjectScanResultView.as_view(), name='file-list'),
+    url(r'^applications/(?P<app_pk>\d+)/scans/(?P<pk>\d+)/((files/)?)$', api_views.ScanResultFiles.as_view(), name='file-list'),
     url(r'^applications/(?P<app_pk>\d+)/scans/(?P<scanPk>\d+)/files/(?P<filePk>\d+)/$', api_views.ScanResultFileIssueView.as_view(), name='file-list'),
-
+    url(r'^scan/$', api_views.SingleFileView.as_view()),
 ]

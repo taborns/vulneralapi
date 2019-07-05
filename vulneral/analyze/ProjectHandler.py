@@ -1,7 +1,7 @@
 from vulneral.phplex import lexer
 from vulneral.phpparse import make_parser
 from vulneral.analyze.scanner import Scanner
-from vulneral.analyze.printer import Printer
+from vulneral.analyze.issuehandler import IssueHandler
 from vulneral.analyze.FileHandler import FileHandler
 from vulneral.analyze.PHPFile import PHPFile
 import os,os.path,sys,shutil,simplejson,random,hashlib
@@ -68,13 +68,13 @@ class ProjectHandler:
         
 
     @staticmethod
-    def handle(zipName):
+    def handle(zipName, application, scanResult):
         output_directory = ProjectHandler.unzipFolder(zipName)
         #os.remove(zipName)
         file_paths = ProjectHandler.getFiles(output_directory)
 
         for file_path in file_paths:
-            phpFile = PHPFile(file_path)
+            phpFile = PHPFile(file_path, application, scanResult)
             ProjectHandler.fileHandler.addFile(phpFile)
             phpFile.handle()
 
